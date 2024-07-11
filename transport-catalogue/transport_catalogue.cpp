@@ -41,12 +41,6 @@ response::RouteInfo TransportCatalogue::GetBusInfo(std::string_view bus_name) co
 
     auto prev = route[0]->coordinate;
     std::unordered_set<std::string_view> uniq_stops{ route[0]->name };
-    //for (int i = 1; i < route.size(); ++i) {
-    //    route_info.route_length += geo::ComputeDistance(prev, route[i]->coordinate);
-    //    prev = route[i]->coordinate;
-    //    uniq_stops.insert(route[i]->name);
-    //}
-
     route_info.route_length = std::accumulate(std::next(route.begin()), route.end(), 0.0,
         [&](auto lenght, const auto& stop) {
             uniq_stops.insert(stop->name);
