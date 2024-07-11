@@ -28,6 +28,7 @@ geo::Coordinates ParseCoordinates(std::string_view str) {
     return {lat, lng};
 }
 
+namespace detail {
 /**
  * Удаляет пробелы в начале и конце строки
  */
@@ -59,6 +60,7 @@ std::vector<std::string_view> Split(std::string_view string, char delim) {
 
     return result;
 }
+} // namespace detail
 
 /**
  * Парсит маршрут.
@@ -67,10 +69,10 @@ std::vector<std::string_view> Split(std::string_view string, char delim) {
  */
 std::vector<std::string_view> ParseRoute(std::string_view route) {
     if (route.find('>') != route.npos) {
-        return Split(route, '>');
+        return detail::Split(route, '>');
     }
 
-    auto stops = Split(route, '-');
+    auto stops = detail::Split(route, '-');
     std::vector<std::string_view> results(stops.begin(), stops.end());
     results.insert(results.end(), std::next(stops.rbegin()), stops.rend());
 
@@ -113,7 +115,7 @@ void InputReader::ApplyCommands([[maybe_unused]] TransportCatalogue& catalogue) 
             catalogue.AddStop(query.id, ParseCoordinates(query.description));
         }
     }
-    // после обработаем добавление маршрутов
+    // после добавим маршруты
     for (auto& query : commands_) {
         if (query.command == "Bus"s) {
             catalogue.AddBus(query.id, ParseRoute(query.description));

@@ -7,24 +7,24 @@ namespace output {
 namespace detail {
 
 Query ParseRequest(std::string_view request) {
-    auto space_pos = request.find(' ');
+    const auto space_pos = request.find(' ');
     if (space_pos >= request.npos) {
         return {};
     }
 
-    auto not_space = request.find_first_not_of(' ', space_pos);
+    const auto not_space = request.find_first_not_of(' ', space_pos);
     if (not_space >= request.npos) {
         return {};
     }
 
-    return { std::string(request.substr(0,space_pos)),
-        std::string(request.substr(not_space)) };
+    const auto last_not_space = request.find_last_not_of(' ') + 1;
+    return { request.substr(0,space_pos),
+        request.substr(not_space, last_not_space - not_space) };
 }
 } // namespace detail
 
 std::ostream& operator<<(std::ostream& os, const response::RouteInfo& response) {
     using namespace std::string_literals;
-    os << ": "s;
     if (response.count_stops == 0) {
         return os << "not found"s;
     }
@@ -36,7 +36,6 @@ std::ostream& operator<<(std::ostream& os, const response::RouteInfo& response) 
 
 std::ostream& operator<<(std::ostream& os, const response::BusForStop& response) {
     using namespace std::string_literals;
-    os << ": "s;
     if (!response.stop) {
         return os << "not found"s;
     }
@@ -53,13 +52,15 @@ std::ostream& operator<<(std::ostream& os, const response::BusForStop& response)
 }
 
 void ParseAndPrint(const TransportCatalogue& transport_catalogue, std::string_view request, std::ostream& output) {
-    const auto query = detail::ParseRequest(request);
-    output << request;
+    using namespace std::string_literals;
 
-    if (query.type == "Bus") {
+    const auto query = detail::ParseRequest(request);
+    output << query.type << " "s << query.text << ": "s;
+
+    if (query.type == "Bus"s) {
         output << transport_catalogue.GetBusInfo(query.text);
     }
-    else if (query.type == "Stop") {
+    else if (query.type == "Stop"s) {
         output << transport_catalogue.GetStopInfo(query.text);
     }
 

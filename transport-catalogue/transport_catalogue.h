@@ -25,13 +25,13 @@ struct BusForStop {
 
 class TransportCatalogue {
 public:
-    void AddBus(const std::string_view name, const std::vector<std::string_view> bus);
+    void AddBus(std::string_view bus_name, const std::vector<std::string_view> stops);
 
-    void AddStop(const std::string_view name, const geo::Coordinates coordinates);
+    void AddStop(std::string_view stop_name, const geo::Coordinates coordinates);
 
-    response::RouteInfo GetBusInfo(std::string_view name) const;
+    response::RouteInfo GetBusInfo(std::string_view bus_name) const;
 
-    response::BusForStop GetStopInfo(std::string_view name) const;
+    response::BusForStop GetStopInfo(std::string_view stop_name) const;
 
 private:
     struct Stop {

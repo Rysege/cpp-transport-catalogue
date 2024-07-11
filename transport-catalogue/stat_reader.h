@@ -7,8 +7,8 @@ namespace catalog {
 namespace output {
 
 struct Query {
-    std::string type;
-    std::string text;
+    std::string_view type;
+    std::string_view text;
 };
 
 void ParseAndPrint(const TransportCatalogue& transport_catalogue, std::string_view request, std::ostream& output);
