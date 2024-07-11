@@ -37,16 +37,16 @@ std::ostream& operator<<(std::ostream& os, const response::RouteInfo& response) 
 
 std::ostream& operator<<(std::ostream& os, const response::BusForStop& response) {
     using namespace std::string_literals;
-    if (!response.buses) {
+    if (!response) {
         return os << "not found"s;
     }
 
-    if (response.buses.value() == nullptr) {
+    if (response.value() == nullptr) {
         return os << "no buses"s;
     }
 
     os << "buses"s;
-    for (auto& bus : *response.buses.value()) {
+    for (auto& bus : *response.value()) {
         os << " "s << bus;
     }
     return os;

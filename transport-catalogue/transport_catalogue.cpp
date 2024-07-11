@@ -11,8 +11,9 @@ void TransportCatalogue::AddBus(std::string_view bus_name, const std::vector<std
     std::vector<const Stop*> route;
     route.reserve(stops.size());
     for (auto& stop : stops) {
-        assert(stopname_to_stop_.count(stop));
-        route.emplace_back(stopname_to_stop_.at(stop));
+        const auto it = stopname_to_stop_.find(stop);
+        assert(it != stopname_to_stop_.end());
+        route.emplace_back(it->second);
     }
 
     buses_.push_back({ std::string(bus_name), std::move(route) });
@@ -31,12 +32,13 @@ void TransportCatalogue::AddStop(std::string_view stop_name, const geo::Coordina
 }
 
 response::RouteInfo TransportCatalogue::GetBusInfo(std::string_view bus_name) const {
-    if (!busname_to_bus_.count(bus_name)) {
+    const auto bus_iter = busname_to_bus_.find(bus_name);
+    if (bus_iter == busname_to_bus_.end()) {
         return {};
     }
 
     response::RouteInfo route_info{};
-    const auto& route = busname_to_bus_.at(bus_name)->stops;
+    const auto& route = bus_iter->second->stops;
     route_info.count_stops = route.size();
 
     auto prev = route[0]->coordinate;
@@ -57,10 +59,11 @@ response::BusForStop TransportCatalogue::GetStopInfo(std::string_view stop_name)
         return {};
     }
 
-    if (!stops_to_buses_.count(stop_name)) {
+    const auto stop_iter = stops_to_buses_.find(stop_name);
+    if (stop_iter == stops_to_buses_.end()) {
         return { nullptr };
     }
 
-    return { &stops_to_buses_.at(stop_name) };
+    return { &stop_iter->second };
 }
 } // namespace catalog

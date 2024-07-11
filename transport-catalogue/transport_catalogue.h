@@ -18,10 +18,18 @@ struct RouteInfo {
     double route_length = 0.0;
 };
 
-struct BusForStop {
-    std::optional<const std::set<std::string_view>*> buses;
-};
+using BusForStop = std::optional<const std::set<std::string_view>*>;
 } // namespace response
+
+struct Stop {
+    std::string name;
+    geo::Coordinates coordinate;
+};
+
+struct Bus {
+    std::string name;
+    std::vector<const Stop*> stops;
+};
 
 class TransportCatalogue {
 public:
@@ -34,16 +42,6 @@ public:
     response::BusForStop GetStopInfo(std::string_view stop_name) const;
 
 private:
-    struct Stop {
-        std::string name;
-        geo::Coordinates coordinate;
-    };
-
-    struct Bus {
-        std::string name;
-        std::vector<const Stop*> stops;
-    };
-
     std::deque<Stop> stops_;
     std::deque<Bus> buses_;
     std::unordered_map<std::string_view, const Stop*> stopname_to_stop_;
