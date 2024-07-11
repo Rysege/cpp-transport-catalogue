@@ -1,13 +1,14 @@
 #include <algorithm>
 #include <cassert>
 #include <numeric>
+#include <unordered_set>
 #include <utility>
 
 #include "transport_catalogue.h"
 
 namespace catalog {
 
-void TransportCatalogue::AddBus(std::string_view bus_name, const std::vector<std::string_view> stops) {
+void TransportCatalogue::AddBus(std::string_view bus_name, const std::vector<std::string_view>& stops) {
     std::vector<const Stop*> route;
     route.reserve(stops.size());
     for (auto& stop : stops) {
@@ -44,7 +45,7 @@ response::RouteInfo TransportCatalogue::GetBusInfo(std::string_view bus_name) co
     route_info.route_length = std::accumulate(std::next(route.begin()), route.end(), 0.0,
         [&](auto lenght, const auto& stop) {
             uniq_stops.insert(stop->name);
-            return lenght + geo::ComputeDistance(std::exchange(prev,stop->coordinate), stop->coordinate);
+            return lenght + geo::ComputeDistance(std::exchange(prev, stop->coordinate), stop->coordinate);
         });
 
     route_info.count_uniq_stops = uniq_stops.size();
@@ -58,16 +59,9 @@ response::BusForStop TransportCatalogue::GetStopInfo(std::string_view stop_name)
     }
 
     if (!stops_to_buses_.count(stop_name)) {
-        return { true, {} };
+        return { nullptr };
     }
 
-    std::vector<std::string_view> buses;
-    for (auto& bus : stops_to_buses_.at(stop_name)) {
-        buses.emplace_back(bus);
-    }
-
-    std::sort(buses.begin(), buses.end());
-
-    return { true, buses };
+    return { &stops_to_buses_.at(stop_name) };
 }
 } // namespace catalog

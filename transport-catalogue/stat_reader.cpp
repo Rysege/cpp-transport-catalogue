@@ -1,4 +1,5 @@
 #include <iomanip>
+#include <iostream>
 
 #include "stat_reader.h"
 
@@ -36,19 +37,29 @@ std::ostream& operator<<(std::ostream& os, const response::RouteInfo& response) 
 
 std::ostream& operator<<(std::ostream& os, const response::BusForStop& response) {
     using namespace std::string_literals;
-    if (!response.stop) {
+    if (!response.buses) {
         return os << "not found"s;
     }
 
-    if (response.buses.empty()) {
+    if (response.buses.value() == nullptr) {
         return os << "no buses"s;
     }
 
     os << "buses"s;
-    for (auto& bus : response.buses) {
+    for (auto& bus : *response.buses.value()) {
         os << " "s << bus;
     }
     return os;
+}
+
+void RequestCatalogue(std::istream& in, std::ostream& out, const TransportCatalogue& catalogue) {
+    int stat_request_count;
+    in >> stat_request_count >> std::ws;
+    for (int i = 0; i < stat_request_count; ++i) {
+        std::string line;
+        std::getline(in, line);
+        ParseAndPrint(catalogue, line, out);
+    }
 }
 
 void ParseAndPrint(const TransportCatalogue& transport_catalogue, std::string_view request, std::ostream& output) {

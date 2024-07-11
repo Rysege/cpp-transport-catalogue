@@ -1,9 +1,12 @@
 #pragma once
+#include <iosfwd>
 
 #include "transport_catalogue.h"
 
 namespace catalog {
 namespace input {
+
+void LoadCatalogue(std::istream& in, TransportCatalogue& catalogue);
 
 struct CommandDescription {
     // Определяет, задана ли команда (поле command непустое)

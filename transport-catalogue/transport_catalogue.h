@@ -2,8 +2,9 @@
 #include <deque>
 #include <string>
 #include <string_view>
+#include <optional>
+#include <set>
 #include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
 #include "geo.h"
@@ -18,14 +19,13 @@ struct RouteInfo {
 };
 
 struct BusForStop {
-    bool stop = false;
-    std::vector<std::string_view> buses;
+    std::optional<const std::set<std::string_view>*> buses;
 };
 } // namespace response
 
 class TransportCatalogue {
 public:
-    void AddBus(std::string_view bus_name, const std::vector<std::string_view> stops);
+    void AddBus(std::string_view bus_name, const std::vector<std::string_view>& stops);
 
     void AddStop(std::string_view stop_name, const geo::Coordinates coordinates);
 
@@ -48,6 +48,6 @@ private:
     std::deque<Bus> buses_;
     std::unordered_map<std::string_view, const Stop*> stopname_to_stop_;
     std::unordered_map<std::string_view, const Bus*> busname_to_bus_;
-    std::unordered_map<std::string_view, std::unordered_set<std::string_view>> stops_to_buses_;
+    std::unordered_map<std::string_view, std::set<std::string_view>> stops_to_buses_;
 };
 } // namespace catalog
