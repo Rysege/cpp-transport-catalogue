@@ -25,57 +25,60 @@ Query ParseRequest(std::string_view request) {
 } // namespace detail
 
 std::ostream& operator<<(std::ostream& os, const response::RouteInfo& response) {
-    using namespace std::string_literals;
+    using namespace std::literals;
     if (response.count_stops == 0) {
-        return os << "not found"s;
+        return os << "not found"sv;
     }
 
-    return os << response.count_stops << " stops on route, "s
-        << response.count_uniq_stops << " unique stops, "s
-        << std::setprecision(6) << response.route_length << " route length"s;
+    return os << response.count_stops << " stops on route, "sv
+        << response.count_uniq_stops << " unique stops, "sv
+        << std::setprecision(6) << response.route_length << " route length, "sv
+        << response.curvature << " curvature"sv;
 }
 
 std::ostream& operator<<(std::ostream& os, const response::BusForStop& response) {
-    using namespace std::string_literals;
+    using namespace std::literals;
     if (!response) {
-        return os << "not found"s;
+        return os << "not found"sv;
     }
 
     if (response.value() == nullptr) {
-        return os << "no buses"s;
+        return os << "no buses"sv;
     }
 
-    os << "buses"s;
+    os << "buses"sv;
     for (auto& bus : *response.value()) {
-        os << " "s << bus;
+        os << " "sv << bus;
     }
     return os;
 }
 
-void RequestCatalogue(std::istream& in, std::ostream& out, const TransportCatalogue& catalogue) {
+void RequestCatalogue(const TransportCatalogue& catalogue, std::istream& in, std::ostream& out) {
     int stat_request_count;
-    in >> stat_request_count >> std::ws;
+    in >> stat_request_count;
     for (int i = 0; i < stat_request_count; ++i) {
         std::string line;
-        std::getline(in, line);
-        ParseAndPrint(catalogue, line, out);
+        std::getline(in >> std::ws, line);
+        ProcessRequest(catalogue, line, out);
     }
 }
 
-void ParseAndPrint(const TransportCatalogue& transport_catalogue, std::string_view request, std::ostream& output) {
-    using namespace std::string_literals;
+void ProcessRequest(const TransportCatalogue& catalogue, std::string_view request, std::ostream& out) {
+    using namespace std::literals;
 
     const auto query = detail::ParseRequest(request);
-    output << query.type << " "s << query.text << ": "s;
-
-    if (query.type == "Bus"s) {
-        output << transport_catalogue.GetBusInfo(query.text);
+    if (query.type.empty()) {
+        return;
     }
-    else if (query.type == "Stop"s) {
-        output << transport_catalogue.GetStopInfo(query.text);
-    }
+    out << query.type << " "sv << query.text << ": "sv;
 
-    output << std::endl;
+    if (query.type == "Bus"sv) {
+        out << catalogue.GetBusInfo(query.text);
+    }
+    else if (query.type == "Stop"sv) {
+        out << catalogue.GetStopInfo(query.text);
+    }
+    out << std::endl;
 }
 } // namespase output
 } // namespace catalog

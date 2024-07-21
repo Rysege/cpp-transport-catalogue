@@ -6,7 +6,7 @@
 namespace catalog {
 namespace input {
 
-void LoadCatalogue(std::istream& in, TransportCatalogue& catalogue);
+void LoadCatalogue(TransportCatalogue& catalogue, std::istream& in);
 
 struct CommandDescription {
     // Определяет, задана ли команда (поле command непустое)

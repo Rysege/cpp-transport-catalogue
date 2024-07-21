@@ -8,6 +8,6 @@ using namespace catalog;
 int main() {
     TransportCatalogue catalogue;
 
-    input::LoadCatalogue(std::cin, catalogue);
-    output::RequestCatalogue(std::cin, std::cout, catalogue);
+    input::LoadCatalogue(catalogue, std::cin);
+    output::RequestCatalogue(catalogue, std::cin, std::cout);
 }

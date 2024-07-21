@@ -6,13 +6,13 @@
 namespace catalog {
 namespace output {
 
-void RequestCatalogue(std::istream& in, std::ostream& out, const TransportCatalogue& catalogue);
-
 struct Query {
     std::string_view type;
     std::string_view text;
 };
 
-void ParseAndPrint(const TransportCatalogue& transport_catalogue, std::string_view request, std::ostream& output);
+void RequestCatalogue(const TransportCatalogue& catalogue, std::istream& in, std::ostream& out);
+
+void ProcessRequest(const TransportCatalogue& catalogue, std::string_view request, std::ostream& out);
 } // namespase output
 } // namespace catalog
