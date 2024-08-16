@@ -1,9 +1,7 @@
-#include <iostream>
-#include <sstream>
-
 #include "json_reader.h"
 
-#include <fstream>
+#include <iostream>
+#include <sstream>
 
 using namespace std;
 
@@ -60,6 +58,7 @@ void Test() {
         handler::RequestHandler handler(catalogue, map_renderer);
         reader.LoadDataToCatalogue(handler);
         reader.LoadRenderSetting(handler);
+        //handler.RenderMap().Render(std::cout);
         reader.PrintStatRequest(handler, std::cout);
         
     }
@@ -68,44 +67,8 @@ void Test() {
     }
 }
 
-void Test2() {
-
-    ifstream f;
-    f.open("case_input_24.txt", ios::in);
-    catalog::TransportCatalogue catalogue;
-    try {
-        json_reader::JsonReader reader(f);
-        renderer::MapRenderer map_renderer;
-        handler::RequestHandler handler(catalogue, map_renderer);
-        reader.LoadDataToCatalogue(handler);
-        reader.PrintStatRequest(handler, std::cout);
-    }
-    catch (const std::exception& err) {
-        std::cerr << err.what();
-    }
-}
-
-void TestRender() {
-
-    ifstream f;
-    f.open("case001.txt", ios::in);
-    catalog::TransportCatalogue catalogue;
-    try {
-        json_reader::JsonReader reader(f);
-        renderer::MapRenderer map_renderer;
-        handler::RequestHandler handler(catalogue, map_renderer);
-        reader.LoadDataToCatalogue(handler);
-        reader.LoadRenderSetting(handler);
-        //handler.RenderMap().Render(std::cout);
-        reader.PrintStatRequest(handler, std::cout);
-    }
-    catch (const std::exception& err) {
-        std::cerr << err.what();
-    }
-}
-
 int main() {
-    //TestRender();
+    //Test();
 
     catalog::TransportCatalogue catalogue;
     renderer::MapRenderer map_renderer;
