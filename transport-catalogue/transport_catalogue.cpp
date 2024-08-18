@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <cassert>
 #include <iterator>
-#include <unordered_set>
 #include <utility>
 
 namespace catalog {
@@ -21,9 +20,9 @@ void TransportCatalogue::AddBus(std::string_view bus_name, const std::vector<std
         route.push_back(it->second.get());
     }
 
-    auto bus = std::make_unique<Bus>(std::string(bus_name), std::move(route), is_roundtrip);
+    auto bus = std::make_unique<Bus>(Bus{ std::string(bus_name), std::move(route), is_roundtrip });
     auto bus_ptr = bus.get();
-    buses_.insert({ bus.get()->name, std::move(bus)});
+    buses_.insert({ bus_ptr->name, std::move(bus)});
 
     std::string_view name_bus = bus_ptr->name;
     for (auto stop : bus_ptr->stops) {
@@ -36,7 +35,7 @@ void TransportCatalogue::AddStop(std::string_view stop_name, const geo::Coordina
         return;
     }
     assert(!stops_.count(stop_name));
-    auto stop = std::make_unique<Stop>(std::string(stop_name), coordinates);
+    auto stop = std::make_unique<Stop>(Stop{ std::string(stop_name), coordinates });
     stops_.insert({ stop.get()->name, std::move(stop)});
 }
 
@@ -64,8 +63,13 @@ const std::set<const Bus*> TransportCatalogue::GetRoutes() const{
 }
 
 int GetCountUniqueStop(const std::vector<const Stop*>& route) {
-    std::unordered_set<const Stop*> uniq_stops(route.begin(), route.end());
-    return uniq_stops.size();
+    std::vector<const Stop*> tmp;
+    for (auto stop : route) {
+        if (find(tmp.begin(), tmp.end(), stop) == tmp.end()) {
+            tmp.push_back(stop);
+        }
+    }
+    return tmp.size();
 }
 
 BusStat TransportCatalogue::GetBusStat(std::string_view bus_name) const {

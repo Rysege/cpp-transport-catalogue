@@ -37,10 +37,10 @@ ResponseTC RequestHandler::PerformStatRequest(const StatRequest& request) const 
     else if (request.type == "Map"sv) {
         std::ostringstream os;
         RenderMap().Render(os);
-        return StringMsg("map"s, os.str());
+        return StringMsg{ "map"s, os.str() };
 
     }
-    return StringMsg("error_message"s, "not found"s);
+    return StringMsg{ "error_message"s, "not found"s };
 }
 
 void RequestHandler::SetSettingMapRenderer(renderer::RenderSetting& setting) {

@@ -4,7 +4,6 @@
 
 #include <algorithm>
 
-
 namespace json_reader {
 
 class RequestError : public std::runtime_error {

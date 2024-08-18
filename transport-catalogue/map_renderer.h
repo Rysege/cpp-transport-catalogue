@@ -130,8 +130,8 @@ template <typename ReturnType, typename Lambda>
 ReturnType ExtractData(const std::set<const catalog::Bus*>& routes, Lambda lambda) {
     ReturnType result;
     for (auto route : routes) {
-        std::transform(route->stops.begin(), route->stops.end()
-            , std::inserter(result, end(result)), lambda);
+        std::transform(
+            route->stops.begin(), route->stops.end(), std::inserter(result, end(result)), lambda);
     }
     return result;
 }

@@ -1,5 +1,4 @@
 #pragma once
-
 #include <cstdint>
 #include <iostream>
 #include <memory>
@@ -244,7 +243,7 @@ private:
 class ObjectContainer {
 public:
     template<typename Obj>
-    void Add(const Obj& obj) {
+    void Add(Obj obj) {
         AddPtr(std::make_unique<Obj>(std::move(obj)));
     }
 

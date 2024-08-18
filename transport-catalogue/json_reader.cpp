@@ -1,6 +1,5 @@
 #include "json_reader.h"
 
-
 namespace json_reader {
 
 using namespace json;
