@@ -5,20 +5,20 @@
 namespace handler {
 
 struct RequestStop {
-    std::string name;
+    std::string_view name;
     geo::Coordinates coordinates;
     std::unordered_map<std::string_view, int> road_distances;
 };
 
 struct RequestBus {
-    std::string name;
+    std::string_view name;
     std::vector<std::string_view> stops;
     bool is_roundtrip = false;
 };
 
 struct StatRequest {
-    std::string type;
-    std::string name;
+    std::string_view type;
+    std::string_view name;
     int id = 0;
 };
 

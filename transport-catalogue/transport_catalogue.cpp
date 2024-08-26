@@ -57,7 +57,7 @@ void TransportCatalogue::SetDistanceBetweenStops(std::string_view from_stop, std
 const std::set<const Bus*> TransportCatalogue::GetRoutes() const{
     std::set<const Bus*> result;
     std::transform(buses_.begin(), buses_.end(), std::inserter(result, result.end()),
-        [](const auto& bus) {return  bus.second.get(); });
+        [](const auto& bus) { return  bus.second.get(); });
 
     return result;
 }
@@ -78,7 +78,7 @@ BusStat TransportCatalogue::GetBusStat(std::string_view bus_name) const {
         return {};
     }
 
-    auto& route = bus_iter->second->stops;
+    const auto& route = bus_iter->second->stops;
     bool is_roundtrip = bus_iter->second->is_roundtrip;
 
     BusStat bus_stat;

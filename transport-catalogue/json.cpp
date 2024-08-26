@@ -34,7 +34,7 @@ bool Node::IsArray() const {
     return std::holds_alternative<Array>(*this);
 }
 
-bool Node::IsMap() const {
+bool Node::IsDict() const {
     return std::holds_alternative<Dict>(*this);
 }
 
@@ -73,8 +73,8 @@ const Array& Node::AsArray() const {
     return std::get<Array>(*this);
 }
 
-const Dict& Node::AsMap() const {
-    if (!IsMap()) {
+const Dict& Node::AsDict() const {
+    if (!IsDict()) {
         throw std::logic_error("Is not Dict"s);
     }
     return std::get<Dict>(*this);
@@ -85,6 +85,10 @@ bool Node::operator==(const Node& rhs) const {
 }
 
 const Node::Value& Node::GetValue() const {
+    return *this;
+}
+
+Node::Value& Node::GetValue() {
     return *this;
 }
 
@@ -405,6 +409,10 @@ Document::Document(Node root)
 
 const Node& Document::GetRoot() const {
     return root_;
+}
+
+bool Document::operator==(const Document& other) const {
+    return root_ == other.root_;
 }
 
 Document Load(std::istream& input) {

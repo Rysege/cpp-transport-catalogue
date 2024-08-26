@@ -22,6 +22,8 @@ public:
     using variant::variant;
     using Value = variant;
 
+    Node(Value value) : variant(std::move(value)) {}
+
     bool IsNull() const;
     bool IsBool() const;
     bool IsInt() const;
@@ -29,17 +31,18 @@ public:
     bool IsDouble() const;
     bool IsString() const;
     bool IsArray() const;
-    bool IsMap() const;
+    bool IsDict() const;
 
     int AsInt() const;
     bool AsBool() const;
     double AsDouble() const;
     const std::string& AsString() const;
     const Array& AsArray() const;
-    const Dict& AsMap() const;
+    const Dict& AsDict() const;
 
     bool operator==(const Node& rhs) const;
     const Value& GetValue() const;
+    Value& GetValue();
 };
 
 inline bool operator!=(const Node& lhs, const Node& rhs) {
@@ -52,9 +55,15 @@ public:
 
     const Node& GetRoot() const;
 
+    bool operator==(const Document& other) const;
+
 private:
     Node root_;
 };
+
+inline bool operator!=(const Document& lhs, const Document& rhs) {
+    return !(lhs == rhs);
+}
 
 struct PrintContext {
     std::ostream& out;
@@ -72,14 +81,6 @@ struct PrintContext {
         return { out, indent_step, indent_step + indent };
     }
 };
-
-inline bool operator==(const Document& lhs, const Document& rhs) {
-    return lhs.GetRoot() == rhs.GetRoot();
-}
-
-inline bool operator!=(const Document& lhs, const Document& rhs) {
-    return !(lhs == rhs);
-}
 
 Document Load(std::istream& input);
 

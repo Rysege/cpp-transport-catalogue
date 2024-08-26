@@ -3,6 +3,7 @@
 #include "request_handler.h"
 
 #include <algorithm>
+#include <functional>
 
 namespace json_reader {
 
@@ -34,6 +35,19 @@ ReturnType ConvertTo(const Container& container, Lambda lambda) {
     std::transform(begin(container), end(container)
         , std::inserter(result, end(result)), lambda);
     return result;
+}
+
+template<typename ReturnType>
+ReturnType TryCatch(std::function<ReturnType(const json::Dict&)> func, const json::Dict& dict) {
+    try {
+        return func(dict);
+    }
+    catch (std::out_of_range const&) {
+        throw RequestError();
+    }
+    catch (...) {
+        throw;
+    }
 }
 
 } // namespace json_reader

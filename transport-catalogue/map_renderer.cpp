@@ -109,8 +109,7 @@ void MapRenderer::RenderStop(const std::set<const Stop*>& stops, const SpherePro
         .SetFillColor("white"s);
 
     for (auto stop : stops) {
-        circle.SetCenter(proj(stop->coordinate));
-        doc.Add(circle);
+        doc.Add(circle.SetCenter(proj(stop->coordinate)));
     }
 }
 

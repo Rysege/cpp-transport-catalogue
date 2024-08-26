@@ -1,3 +1,4 @@
+#include "json_builder.h"
 #include "json_reader.h"
 
 namespace json_reader {
@@ -22,7 +23,7 @@ RequestStop ParseStopRequest(const Dict& dict) {
     RequestStop request;
     request.name = dict.at("name"s).AsString();
     request.coordinates = { dict.at("latitude"s).AsDouble(), dict.at("longitude"s).AsDouble() };
-    request.road_distances = std::move(ConvertDict(dict.at("road_distances"s).AsMap()));
+    request.road_distances = std::move(ConvertDict(dict.at("road_distances"s).AsDict()));
 
     return request;
 }
@@ -38,51 +39,46 @@ RequestBus ParseBusRequest(const Dict& dict) {
 
 StatRequest ParseStatRequest(const Dict& dict) {
     StatRequest request;
-    try {
-        request.id = dict.at("id"s).AsInt();
-        request.type = dict.at("type"s).AsString();
-        if (dict.size() != 2) {
-            request.name = dict.at("name"s).AsString();
-        }
-    }
-    catch (std::out_of_range const&) {
-        throw RequestError();
-    }
-    catch (...) {
-        throw;
+    request.id = dict.at("id"s).AsInt();
+    request.type = dict.at("type"s).AsString();
+    if (dict.size() != 2) {
+        request.name = dict.at("name"s).AsString();
     }
     return request;
 }
 
-Node ConvertToArray(const std::set<std::string_view>* arr) {
+Array ConvertToArray(const std::set<std::string_view>* arr) {
     Array result;
     if (arr) {
         for (auto str : *arr) {
             result.push_back(std::move(Node(std::string(str))));
         }
     }
-    return Node(std::move(result));
+    return result;
 }
 
 Node ConvertResponse(int id, const StringMsg& str) {
-    return Node(Dict{
-        { "request_id"s, Node(id) },
-        { str.title, std::move(Node(str.msg)) } });
+    return Builder{}.StartDict()
+        .Key("request_id"s).Value(id)
+        .Key(str.title).Value(str.msg)
+        .EndDict().Build();
 }
 
 Node ConvertResponse(int id, const std::set<std::string_view>* arr) {
-    return Node(Dict{
-        { "request_id"s, Node(id) },
-        { "buses"s, std::move(ConvertToArray(arr)) } });
+    return Builder{}.StartDict()
+        .Key("request_id"s).Value(id)
+        .Key("buses"s).Value(std::move(ConvertToArray(arr)))
+        .EndDict().Build();
 }
 
 Node ConvertResponse(int id, const catalog::BusStat& stat) {
-    return Node(Dict{
-        { "request_id"s, Node(id) },
-        { "curvature"s, Node(stat.curvature) },
-        { "route_length"s, Node(stat.route_length) },
-        { "stop_count"s, Node(stat.count_stops) },
-        { "unique_stop_count"s, Node(stat.count_uniq_stops) } });
+    return Builder{}.StartDict()
+        .Key("request_id"s).Value(id)
+        .Key("curvature"s).Value(stat.curvature)
+        .Key("route_length"s).Value(stat.route_length)
+        .Key("stop_count"s).Value(stat.count_stops)
+        .Key("unique_stop_count"s).Value(stat.count_uniq_stops)
+        .EndDict().Build();
 }
 
 Node ProcessResponse(int id, const ResponseTC& response) {
@@ -132,7 +128,7 @@ std::vector<svg::Color> ConvertToArrayColor(const Array& arr) {
 using namespace detail;
 
 const Node& JsonReader::GetNodeRequest(const std::string& name) const {
-    const auto& requests = data_.GetRoot().AsMap();
+    const auto& requests = data_.GetRoot().AsDict();
 
     if (auto it = requests.find(name); it != requests.end()) {
         return it->second;
@@ -145,28 +141,21 @@ void JsonReader::LoadDataToCatalogue(RequestHandler& handler) const {
 
     std::vector<RequestTC> requests;
     for (const auto& request : base_requests) {
-        auto& as_map = request.AsMap();
-        try {
-            auto& type = as_map.at("type"s).AsString();
-            if (type == "Stop"s) {
-                requests.push_back(std::move(ParseStopRequest(as_map)));
-            }
-            if (type == "Bus"s) {
-                requests.push_back(std::move(ParseBusRequest(as_map)));
-            }
+        auto& as_map = request.AsDict();
+        auto& type = as_map.at("type"s).AsString();
+        if (type == "Stop"s) {
+            requests.push_back(std::move(TryCatch<RequestStop>(ParseStopRequest, as_map)));
         }
-        catch (std::out_of_range const&) {
-            throw RequestError();
-        }
-        catch (...) {
-            throw;
+        if (type == "Bus"s) {
+            requests.push_back(std::move(TryCatch<RequestBus>(ParseBusRequest, as_map)));
         }
     }
     handler.PerformBaseRequest(requests);
 }
 
 void JsonReader::LoadRenderSetting(handler::RequestHandler& handler) const {
-    const auto& render_settings = GetNodeRequest("render_settings"s).AsMap();
+    const auto& render_settings = GetNodeRequest("render_settings"s).AsDict();
+
     renderer::RenderSetting setting;
     try {
         setting.width = render_settings.at("width"s).AsDouble();
@@ -196,7 +185,7 @@ Document JsonReader::ProcessStatRequests(RequestHandler& handler) const {
 
     Array result;
     for (const auto& request : stat_requests) {
-        const auto stat_request = ParseStatRequest(request.AsMap());
+        const auto stat_request = TryCatch<StatRequest>(ParseStatRequest, request.AsDict());
         const auto response = handler.PerformStatRequest(stat_request);
         result.push_back(std::move(ProcessResponse(stat_request.id, response)));
     }
