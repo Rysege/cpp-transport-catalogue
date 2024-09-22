@@ -3,7 +3,6 @@
 #include "request_handler.h"
 
 #include <algorithm>
-#include <functional>
 
 namespace json_reader {
 
@@ -18,9 +17,10 @@ public:
     JsonReader(std::istream& in) : data_(json::Load(in)) {}
 
     void ReadJson(std::istream& in);
-    void LoadDataToCatalogue(handler::RequestHandler& handler) const;
-    void LoadRenderSetting(handler::RequestHandler& handler) const;
-    void PrintStatRequest(handler::RequestHandler& handler, std::ostream& out) const;
+    void LoadData(handler::RequestHandler& rh) const;
+    void PrintStatRequest(handler::RequestHandler& rh, std::ostream& out) const;
+    renderer::RenderSetting LoadRenderSetting() const;
+    routemap::RoutingSetting LoadRoutingSetting() const;
 
 private:
     json::Document data_;
@@ -29,16 +29,15 @@ private:
     json::Document ProcessStatRequests(handler::RequestHandler& handler) const;
 };
 
-template <typename ReturnType, typename Container, typename Lambda>
-ReturnType ConvertTo(const Container& container, Lambda lambda) {
-    ReturnType result;
-    std::transform(begin(container), end(container)
-        , std::inserter(result, end(result)), lambda);
+template <typename ReturnType, typename Iterator, typename Lambda>
+ReturnType ConvertTo(Iterator first, Iterator last, Lambda lambda) {
+    ReturnType result{};
+    std::transform(first, last, std::inserter(result, end(result)), lambda);
     return result;
 }
 
-template<typename ReturnType>
-ReturnType TryCatch(std::function<ReturnType(const json::Dict&)> func, const json::Dict& dict) {
+template<typename ReturnType, typename Func>
+ReturnType TryCatch(Func func, const json::Dict& dict) {
     try {
         return func(dict);
     }

@@ -60,7 +60,7 @@ namespace detail {
 template <typename AttrType>
 inline void RenderOptionalAttr(std::ostream& out, const std::optional<AttrType>& value, std::string_view name) {
     if (value) {
-        out << name << '"' << *value << '"';
+        out << name << '"' << (*value) << '"';
     }
 }
 

@@ -12,6 +12,7 @@
 
 namespace catalog {
 
+// ответ на запрос об информации о маршруте
 struct BusStat {
     int count_stops = 0;
     int count_uniq_stops = 0;
@@ -19,6 +20,7 @@ struct BusStat {
     double curvature = 0.0;
 };
 
+// ответ на запрос о маршрутах, проходящих через остановку
 using BusesByStop = std::optional<const std::set<std::string_view>*>;
 
 struct Hasher {
@@ -34,26 +36,26 @@ class TransportCatalogue {
 public:
     void AddBus(std::string_view bus_name, const std::vector<std::string_view>& stops, bool is_roundtrip);
     void AddStop(std::string_view stop_name, const geo::Coordinates coordinates);
-    void SetDistanceBetweenStops(std::string_view from_stop, std::string_view to_stop, const int dist);
-    const std::set<const Bus*> GetRoutes() const;
+    void SetDistance(std::string_view from_stop, std::string_view to_stop, const int dist);
+    int GetDistance(const Stop* from, const Stop* to) const;
+    size_t GetStopsCount() const;
+    std::set<const Bus*> GetRoutes() const;
     const Stop* GetStop(std::string_view stop_name) const;
 
     BusStat GetBusStat(std::string_view bus_name) const;
     BusesByStop GetBusesByStop(std::string_view stop_name) const;
+
+    template <typename Iterator>
+    double CalcDistanceRoute(Iterator begin, Iterator end) const {
+        return std::transform_reduce(std::next(begin), end, begin, 0.0, std::plus(),
+            [&](auto rhs, auto lhs) { return GetDistance(lhs, rhs); });
+    }
 
 private:
     std::unordered_map<std::string_view, std::unique_ptr<Stop>> stops_;
     std::unordered_map<std::string_view, std::unique_ptr<Bus>> buses_;
     std::unordered_map<std::string_view, std::set<std::string_view>> stops_to_buses_;
     std::unordered_map<std::pair<const Stop*, const Stop*>, int, Hasher> stop_distance_;
-
-    double GetDistanceBetweenStops(const Stop* from, const Stop* to) const;
-
-    template <typename Iterator>
-    double CalcDistanceRoute(Iterator begin, Iterator end) const {
-        return std::transform_reduce(std::next(begin), end, begin, 0.0, std::plus(),
-            [&](auto rhs, auto lhs) { return GetDistanceBetweenStops(lhs, rhs); });
-    }
 };
 
 template<typename Iterator>

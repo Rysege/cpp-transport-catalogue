@@ -104,7 +104,9 @@ private:
 
 class MapRenderer {
 public:
-    void operator()(RenderSetting& setting) {
+    MapRenderer() = default;
+
+    void operator()(RenderSetting setting) {
         setting_ = std::move(setting);
     }
 
@@ -120,15 +122,15 @@ private:
 };
 
 template <typename Iterator>
-void AddRoutePoints(Iterator begin, Iterator end, svg::Polyline& shape, const SphereProjector& proj) {
-    while (begin != end) {
-        shape.AddPoint(proj((*begin++)->coordinate));
+void AddRoutePoints(Iterator first, Iterator last, svg::Polyline& shape, const SphereProjector& proj) {
+    while (first != last) {
+        shape.AddPoint(proj((*first++)->coordinate));
     }
 }
 
 template <typename ReturnType, typename Lambda>
 ReturnType ExtractData(const std::set<const catalog::Bus*>& routes, Lambda lambda) {
-    ReturnType result;
+    ReturnType result{};
     for (auto route : routes) {
         std::transform(
             route->stops.begin(), route->stops.end(), std::inserter(result, end(result)), lambda);

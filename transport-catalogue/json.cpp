@@ -350,14 +350,9 @@ void PrintValue(const Array& value, const PrintContext& ctx) {
     if (!value.empty()) {
         out.put('\n');
         auto inner_ctx = ctx.Indented();
-        bool first = true;
+        std::string_view sep;
         for (auto& node : value) {
-            if (first) {
-                first = false;
-            }
-            else {
-                out << ",\n"sv;
-            }
+            out << sep, sep = ",\n"sv;
             inner_ctx.PrintIndent();
             PrintNode(node, inner_ctx);
         }
@@ -372,18 +367,13 @@ void PrintValue(const Dict& value, const PrintContext& ctx) {
     out.put('{');
     if (!value.empty()) {
         out.put('\n');
-        bool first = true;
         auto inner_ctx = ctx.Indented();
         int max_size = std::accumulate(value.begin(), value.end(), 0,
             [](size_t m, const std::pair<std::string, Node>& p) {return std::max(m, p.first.size()); });
+        std::string_view sep;
 
         for (auto& [key, node] : value) {
-            if (first) {
-                first = false;
-            }
-            else {
-                out << ",\n"sv;
-            }
+            out << sep, sep = ",\n"sv;
             inner_ctx.PrintIndent();
             PrintNode(key, ctx);
             out << std::string(max_size - key.size(), ' ') << ": "sv;

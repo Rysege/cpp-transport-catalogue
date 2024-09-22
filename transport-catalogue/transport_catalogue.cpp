@@ -14,14 +14,14 @@ void TransportCatalogue::AddBus(std::string_view bus_name, const std::vector<std
     std::vector<const Stop*> route;
     route.reserve(stops.size());
 
-    for (auto stop : stops) {
+    for (std::string_view stop : stops) {
         const auto it = stops_.find(stop);
         assert(it != stops_.end());
         route.push_back(it->second.get());
     }
 
     auto bus = std::make_unique<Bus>(Bus{ std::string(bus_name), std::move(route), is_roundtrip });
-    auto bus_ptr = bus.get();
+    const Bus* bus_ptr = bus.get();
     buses_.insert({ bus_ptr->name, std::move(bus)});
 
     std::string_view name_bus = bus_ptr->name;
@@ -39,12 +39,12 @@ void TransportCatalogue::AddStop(std::string_view stop_name, const geo::Coordina
     stops_.insert({ stop.get()->name, std::move(stop)});
 }
 
-void TransportCatalogue::SetDistanceBetweenStops(std::string_view from_stop, std::string_view to_stop, const int dist) {
+void TransportCatalogue::SetDistance(std::string_view from_stop, std::string_view to_stop, const int dist) {
     if (from_stop.empty() || to_stop.empty() || dist <= 0) {
         return;
     }
-    auto from = GetStop(from_stop);
-    auto to = GetStop(to_stop);
+    const Stop* from = GetStop(from_stop);
+    const Stop* to = GetStop(to_stop);
 
     stop_distance_[{from, to}] = dist;
 
@@ -54,7 +54,7 @@ void TransportCatalogue::SetDistanceBetweenStops(std::string_view from_stop, std
     }
 }
 
-const std::set<const Bus*> TransportCatalogue::GetRoutes() const{
+std::set<const Bus*> TransportCatalogue::GetRoutes() const{
     std::set<const Bus*> result;
     std::transform(buses_.begin(), buses_.end(), std::inserter(result, result.end()),
         [](const auto& bus) { return  bus.second.get(); });
@@ -79,15 +79,15 @@ BusStat TransportCatalogue::GetBusStat(std::string_view bus_name) const {
     }
 
     const auto& route = bus_iter->second->stops;
-    bool is_roundtrip = bus_iter->second->is_roundtrip;
 
     BusStat bus_stat;
-    bus_stat.count_stops = is_roundtrip ? route.size(): route.size() * 2 - 1;
+    bus_stat.count_stops = route.size();
     bus_stat.count_uniq_stops = GetCountUniqueStop(route);
     bus_stat.route_length = CalcDistanceRoute(route.begin(), route.end());
     double dist_geo = CalcDistanceRouteGeo(route.begin(), route.end());
 
     if (!bus_iter->second->is_roundtrip) {
+        bus_stat.count_stops += route.size() - 1;
         bus_stat.route_length += CalcDistanceRoute(route.rbegin(), route.rend());
         dist_geo += CalcDistanceRouteGeo(route.rbegin(), route.rend());
     }
@@ -104,9 +104,13 @@ BusesByStop TransportCatalogue::GetBusesByStop(std::string_view stop_name) const
     return stop_iter != stops_to_buses_.end() ? &stop_iter->second : nullptr;
 }
 
-double TransportCatalogue::GetDistanceBetweenStops(const Stop* from, const Stop* to) const {
+size_t TransportCatalogue::GetStopsCount() const {
+    return stops_.size();
+}
+
+int TransportCatalogue::GetDistance(const Stop* from, const Stop* to) const {
     auto it = stop_distance_.find({ from, to });
-    return it == stop_distance_.end() ? geo::ComputeDistance(from->coordinate, to->coordinate) : it->second;
+    return it == stop_distance_.end() ? 0 : it->second;
 }
 
 const Stop* TransportCatalogue::GetStop(std::string_view stop_name) const {

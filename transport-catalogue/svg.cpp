@@ -67,7 +67,7 @@ std::ostream& operator<<(std::ostream& os, const StrokeLineJoin line_join) {
     return os;
 }
 
-void RenderRgb(std::ostream& out, Rgb rgb) {
+void RenderRgb(std::ostream& out, const Rgb& rgb) {
     out << static_cast<uint16_t>(rgb.red) << ','
         << static_cast<uint16_t>(rgb.green) << ','
         << static_cast<uint16_t>(rgb.blue);
@@ -81,15 +81,15 @@ void RenderColor(std::ostream& out, std::string_view text) {
     out << text;
 }
 
-void RenderColor(std::ostream& out, Rgb rgb) {
+void RenderColor(std::ostream& out, const Rgb& rgb) {
     out << "rgb("sv;
     RenderRgb(out, rgb);
     out << ')';
 }
 
-void RenderColor(std::ostream& out, Rgba rgba) {
+void RenderColor(std::ostream& out, const Rgba& rgba) {
     out << "rgba("sv;
-    RenderRgb(out, static_cast<Rgb>(rgba));
+    RenderRgb(out, rgba);
     out << ',' << rgba.opacity << ')';
 }
 
@@ -134,7 +134,7 @@ void Polyline::RenderObject(const RenderContext& context) const {
     auto& out = context.out;
     out << "<polyline points=\""sv;
     bool first = true;
-    for (auto p : points_) {
+    for (Point p : points_) {
         if (first) {
             first = false;
         }
