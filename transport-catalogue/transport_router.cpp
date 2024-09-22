@@ -7,11 +7,11 @@ using namespace catalog;
 
 double TransportRouter::ComputeTravelTime(int dist) const {
     static const double mpm = 60. / 1000;
-    return dist / setting_.bus_velocity * mpm;
+    return dist / settings_.bus_velocity * mpm;
 }
 
 void TransportRouter::AddEdge(graph::VertexId id1, graph::VertexId id2, Way item) {
-    EdgeId edge_id = graph_->AddEdge({ id1, id2, item.time });
+    EdgeId edge_id = graph_.AddEdge({ id1, id2, item.time });
     items_[edge_id] = std::move(item);
 }
 
@@ -24,7 +24,6 @@ std::optional<graph::VertexId> TransportRouter::GetVertexId(std::string_view nam
 
 void TransportRouter::BuildGraph(const TransportCatalogue& db) {
     const auto& routes = db.GetRoutes();
-    graph_.emplace((db.GetStopsCount() * 2));
 
     for (const Bus* route : routes) {
         const auto& stops = route->stops;
@@ -32,7 +31,7 @@ void TransportRouter::BuildGraph(const TransportCatalogue& db) {
         for (int i = 0; i < stops.size() - 1; ++i) {
             auto [insertion, prev_vertex] = AssignVertexId(stops[i]->name);
             if (insertion) {
-                AddEdge(prev_vertex, prev_vertex + 1, {  stops[i]->name, 0, setting_.bus_wait_time * 1. });
+                AddEdge(prev_vertex, prev_vertex + 1, {  stops[i]->name, 0, settings_.bus_wait_time * 1. });
             }
             const Stop* prev_stop = stops[i];
             double travel_time = 0., travel_time_back = 0.;
@@ -41,7 +40,7 @@ void TransportRouter::BuildGraph(const TransportCatalogue& db) {
                 if (stops[i] != stops[j]) {
                     auto [insertion, vertex] = AssignVertexId(stops[j]->name);
                     if (insertion) {
-                        AddEdge(vertex, vertex + 1, { stops[j]->name, 0, setting_.bus_wait_time * 1. });
+                        AddEdge(vertex, vertex + 1, { stops[j]->name, 0, settings_.bus_wait_time * 1. });
                     }
                     travel_time += ComputeTravelTime(db.GetDistance(prev_stop, stops[j]));
                     AddEdge(prev_vertex + 1, vertex, { route->name, j - i, travel_time });
@@ -54,10 +53,16 @@ void TransportRouter::BuildGraph(const TransportCatalogue& db) {
             }
         }
     }
-    router_.emplace(Router<double>(*graph_));
+    router_.emplace(Router<double>(graph_));
 }
 
-std::optional<std::pair<double, std::vector<Way>>> TransportRouter::FindBestRoute(std::string_view from, std::string_view to) const {
+TransportRouter::TransportRouter(RoutingSettings setting, const catalog::TransportCatalogue& db) 
+    : settings_(setting)
+    , graph_(db.GetStopsCount() * 2) {
+    BuildGraph(db);
+}
+
+std::optional<FoundRoute> TransportRouter::FindBestRoute(std::string_view from, std::string_view to) const {
     auto stop_from = GetVertexId(from);
     auto stop_to = GetVertexId(to);
     if (!stop_from || !stop_to) {
@@ -68,6 +73,7 @@ std::optional<std::pair<double, std::vector<Way>>> TransportRouter::FindBestRout
     if (!route) {
         return {};
     }
+
     std::vector<Way> items;
     for (EdgeId id : route->edges) {
         items.push_back(items_.at(id));

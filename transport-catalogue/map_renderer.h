@@ -11,7 +11,7 @@
 
 namespace renderer {
 
-struct RenderSetting {
+struct RenderSettings {
     double width = 0.0;
     double height = 0.0;
     double padding = 0.0;
@@ -104,16 +104,14 @@ private:
 
 class MapRenderer {
 public:
-    MapRenderer() = default;
-
-    void operator()(RenderSetting setting) {
-        setting_ = std::move(setting);
+    MapRenderer(RenderSettings settings)
+        : settings_(settings) {
     }
 
     svg::Document RenderMap(const std::set<const catalog::Bus*>& routes) const;
 
 private:
-    RenderSetting setting_;
+    RenderSettings settings_;
 
     void RenderRoute(const std::set<const catalog::Bus*>& routes, const SphereProjector& proj, svg::Document& doc) const;
     void RenderRouteName(const std::set<const catalog::Bus*>& routes, const SphereProjector& proj, svg::Document& doc) const;

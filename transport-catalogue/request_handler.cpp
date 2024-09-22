@@ -12,7 +12,7 @@ class StatQuery {
 public:
     StatQuery(int id) : id_(id) {}
     virtual ~StatQuery() = default;
-    virtual Node Process(const TransportCatalogue&, const MapRenderer&, TransportRouter&) const = 0;
+    virtual Node Process(const TransportCatalogue&, const MapRenderer&, const TransportRouter&) const = 0;
 
 protected:
     int GetId() const {
@@ -42,21 +42,27 @@ private:
 };
 
 void RequestHandler::ProcessBaseQuery(const BaseQueryHandler& handler) const {
-    router_.Clear();
     handler.ProcessBaseQuery(db_);
 }
 
-Node RequestHandler::ProcessStatQuery(const StatRequest& config) const {
+std::vector<Node> RequestHandler::ProcessStatQuery(const std::vector<StatRequest>& requests) const {
+    MapRenderer renderer(render_settings_);
+    TransportRouter router(routing_settings_, db_);
+
+    std::vector<Node> result;
     const StatQueryFactory factory;
-    return factory.Create(config)->Process(db_, renderer_, router_);
+    for (const auto& config : requests) {
+        result.push_back(factory.Create(config)->Process(db_, renderer, router));
+    }
+    return result;
 }
 
-void RequestHandler::SetSettingMapRenderer(renderer::RenderSetting setting) {
-    renderer_(setting);
+void RequestHandler::SetSettingMapRenderer(renderer::RenderSettings settings) {
+    render_settings_ = settings;
 }
 
-void RequestHandler::SetSettingTransportRouter(routemap::RoutingSetting setting) {
-    router_(setting);
+void RequestHandler::SetSettingTransportRouter(routemap::RoutingSettings settings) {
+    routing_settings_ = settings;
 }
 
 namespace base_queries {
@@ -127,7 +133,7 @@ public:
         , name_(name) {
     }
 
-    Node Process(const TransportCatalogue& db, const MapRenderer&, TransportRouter&) const override {
+    Node Process(const TransportCatalogue& db, const MapRenderer&, const TransportRouter&) const override {
         if (const auto& response = db.GetBusesByStop(name_)) {
             return Build(response.value());
         }
@@ -167,7 +173,7 @@ public:
         , name_(name) {
     }
 
-    Node Process(const TransportCatalogue& db, const MapRenderer&, TransportRouter&) const override {
+    Node Process(const TransportCatalogue& db, const MapRenderer&, const TransportRouter&) const override {
         const auto& response = db.GetBusStat(name_);
         if (response.count_stops != 0) {
             return Build(response);
@@ -198,7 +204,7 @@ class StatQueryMap : public StatQuery {
 public:
     using StatQuery::StatQuery;
 
-    Node Process(const TransportCatalogue& db, const MapRenderer& renderer, TransportRouter&) const override {
+    Node Process(const TransportCatalogue& db, const MapRenderer& renderer, const TransportRouter&) const override {
         std::ostringstream os;
         renderer.RenderMap(db.GetRoutes()).Render(os);
         return Build(os.str());
@@ -226,13 +232,10 @@ public:
         , to_(to) {
     }
 
-    Node Process(const TransportCatalogue& db, const MapRenderer&, TransportRouter& router) const override {
-        if (!router) {
-            router.BuildGraph(db);
-        }
+    Node Process(const TransportCatalogue&, const MapRenderer&, const TransportRouter& router) const override {
         const auto result = router.FindBestRoute(from_, to_);
         if (result) {
-            return Build(result->first, result->second);
+            return Build(*result);
         }
         return StatQuery::Build();
     }
@@ -246,11 +249,11 @@ private:
     std::string_view from_;
     std::string_view to_;
 
-    Node Build(double total_time, const std::vector<Way>& items) const {
+    Node Build(const FoundRoute& route) const {
         return Builder{}.StartDict()
             .Key("request_id"s).Value(GetId())
-            .Key("total_time"s).Value(total_time)
-            .Key("items"s).Value(std::move(BuildArray(items)))
+            .Key("total_time"s).Value(route.total_time)
+            .Key("items"s).Value(std::move(BuildArray(route.ways)))
             .EndDict().Build();
     }
 

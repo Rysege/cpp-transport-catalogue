@@ -40,22 +40,19 @@ private:
 
 class RequestHandler {
 public:
-    RequestHandler(catalog::TransportCatalogue& catalogue, routemap::TransportRouter& router, renderer::MapRenderer& renderer)
-        : db_(catalogue)
-        , router_(router)
-        , renderer_(renderer) {
+    RequestHandler(catalog::TransportCatalogue& catalogue)
+        : db_(catalogue) {
     }
 
     void ProcessBaseQuery(const BaseQueryHandler& handler) const;
-    json::Node ProcessStatQuery(const StatRequest& request) const;
-    void SetSettingMapRenderer(renderer::RenderSetting setting);
-    void SetSettingTransportRouter(routemap::RoutingSetting setting);
+    std::vector<json::Node> ProcessStatQuery(const std::vector<StatRequest>& requests) const;
+    void SetSettingMapRenderer(renderer::RenderSettings settings);
+    void SetSettingTransportRouter(routemap::RoutingSettings settings);
 
 private:
     catalog::TransportCatalogue& db_;
-    routemap::TransportRouter& router_;
-    renderer::MapRenderer& renderer_;
-
+    renderer::RenderSettings render_settings_{};
+    routemap::RoutingSettings routing_settings_{};
 };
 
 } // namespace handler

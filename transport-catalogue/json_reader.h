@@ -19,8 +19,8 @@ public:
     void ReadJson(std::istream& in);
     void LoadData(handler::RequestHandler& rh) const;
     void PrintStatRequest(handler::RequestHandler& rh, std::ostream& out) const;
-    renderer::RenderSetting LoadRenderSetting() const;
-    routemap::RoutingSetting LoadRoutingSetting() const;
+    renderer::RenderSettings LoadRenderSettings() const;
+    routemap::RoutingSettings LoadRoutingSettings() const;
 
 private:
     json::Document data_;

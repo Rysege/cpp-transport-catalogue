@@ -121,14 +121,14 @@ void JsonReader::LoadData(RequestHandler& handler) const {
         }
     }
     handler.ProcessBaseQuery(queries);
-    handler.SetSettingMapRenderer(LoadRenderSetting());
-    handler.SetSettingTransportRouter(LoadRoutingSetting());
+    handler.SetSettingMapRenderer(LoadRenderSettings());
+    handler.SetSettingTransportRouter(LoadRoutingSettings());
 }
 
-renderer::RenderSetting JsonReader::LoadRenderSetting() const {
+renderer::RenderSettings JsonReader::LoadRenderSettings() const {
     const Dict& dict = GetNodeRequest("render_settings"s).AsDict();
 
-    renderer::RenderSetting setting;
+    renderer::RenderSettings setting;
     try {
         setting.width = dict.at("width"s).AsDouble();
         setting.height = dict.at("height"s).AsDouble();
@@ -152,13 +152,13 @@ renderer::RenderSetting JsonReader::LoadRenderSetting() const {
     return setting;
 }
 
-routemap::RoutingSetting JsonReader::LoadRoutingSetting() const {
+routemap::RoutingSettings JsonReader::LoadRoutingSettings() const {
     const Dict& dict = GetNodeRequest("routing_settings"s).AsDict();
 
-    routemap::RoutingSetting setting{};
+    routemap::RoutingSettings settings{};
     try {
-        setting.bus_wait_time = dict.at("bus_wait_time"s).AsInt();
-        setting.bus_velocity = dict.at("bus_velocity"s).AsDouble();
+        settings.bus_wait_time = dict.at("bus_wait_time"s).AsInt();
+        settings.bus_velocity = dict.at("bus_velocity"s).AsDouble();
     }
     catch (std::out_of_range const&) {
         throw RequestError("Invalid renderer settings");
@@ -166,18 +166,17 @@ routemap::RoutingSetting JsonReader::LoadRoutingSetting() const {
     catch (...) {
         throw;
     }
-    return setting;
+    return settings;
 }
 
 Document JsonReader::ProcessStatRequests(RequestHandler& handler) const {
     const Array& stat_requests = GetNodeRequest("stat_requests"s).AsArray();
 
-    Array result;
+    std::vector<StatRequest> requests;
     for (const auto& request : stat_requests) {
-        const auto query = ParseStatRequest(request.AsDict());
-        result.push_back(std::move(handler.ProcessStatQuery(query)));
+        requests.push_back(ParseStatRequest(request.AsDict()));
     }
-    return Document(result);
+    return Document(handler.ProcessStatQuery(requests));
 }
 
 void JsonReader::PrintStatRequest(RequestHandler& handler, std::ostream& out) const {

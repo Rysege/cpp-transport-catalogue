@@ -10,11 +10,11 @@ using namespace catalog;
 
 namespace detail {
 
-Text CreateUnderlay(Text text, const RenderSetting& setting) {
+Text CreateUnderlay(Text text, const RenderSettings& settings) {
     text
-        .SetFillColor(setting.underlayer_color)
-        .SetStrokeColor(setting.underlayer_color)
-        .SetStrokeWidth(setting.underlayer_width)
+        .SetFillColor(settings.underlayer_color)
+        .SetStrokeColor(settings.underlayer_color)
+        .SetStrokeWidth(settings.underlayer_width)
         .SetStrokeLineCap(StrokeLineCap::ROUND)
         .SetStrokeLineJoin(StrokeLineJoin::ROUND);
     return text;
@@ -43,7 +43,7 @@ Document MapRenderer::RenderMap(const std::set<const Bus*>& routes) const {
 
     const auto geo_coords = GetCoordinatesOfBusStops(routes);
     const SphereProjector proj{
-        geo_coords.begin(), geo_coords.end(), setting_.width, setting_.height, setting_.padding
+        geo_coords.begin(), geo_coords.end(), settings_.width, settings_.height, settings_.padding
     };
 
     Document doc;
@@ -59,12 +59,12 @@ Document MapRenderer::RenderMap(const std::set<const Bus*>& routes) const {
 
 void MapRenderer::RenderRoute(const std::set<const Bus*>& routes, const SphereProjector& proj, Document& doc) const {
     int index_color = 0;
-    int count_color = setting_.color_palette.size();
+    int count_color = settings_.color_palette.size();
     for (auto route : routes) {
         auto shape = Polyline()
-            .SetStrokeColor(setting_.color_palette.at(index_color))
+            .SetStrokeColor(settings_.color_palette.at(index_color))
             .SetFillColor(NoneColor)
-            .SetStrokeWidth(setting_.line_width)
+            .SetStrokeWidth(settings_.line_width)
             .SetStrokeLineCap(StrokeLineCap::ROUND)
             .SetStrokeLineJoin(StrokeLineJoin::ROUND);
 
@@ -81,7 +81,7 @@ void MapRenderer::RenderRoute(const std::set<const Bus*>& routes, const SpherePr
 
 void MapRenderer::RenderRouteName(const std::set<const Bus*>& routes, const SphereProjector& proj, Document& doc) const {
     int index_color = 0;
-    int count_color = setting_.color_palette.size();
+    int count_color = settings_.color_palette.size();
 
     for (auto route : routes) {
         auto stop = route->stops.front();
@@ -89,14 +89,14 @@ void MapRenderer::RenderRouteName(const std::set<const Bus*>& routes, const Sphe
         do {
             auto text = Text()
                 .SetPosition(proj(stop->coordinate))
-                .SetOffset(setting_.bus_label_offset)
-                .SetFontSize(setting_.bus_label_font_size)
+                .SetOffset(settings_.bus_label_offset)
+                .SetFontSize(settings_.bus_label_font_size)
                 .SetFontFamily("Verdana"s)
                 .SetFontWeight("bold"s)
                 .SetData(route->name);
 
-            doc.Add(CreateUnderlay(text, setting_));
-            doc.Add(text.SetFillColor(setting_.color_palette.at(index_color)));
+            doc.Add(CreateUnderlay(text, settings_));
+            doc.Add(text.SetFillColor(settings_.color_palette.at(index_color)));
         } while (std::exchange(stop, final_stop) != final_stop);
 
         ++index_color %= count_color;
@@ -105,7 +105,7 @@ void MapRenderer::RenderRouteName(const std::set<const Bus*>& routes, const Sphe
 
 void MapRenderer::RenderStop(const std::set<const Stop*>& stops, const SphereProjector& proj, Document& doc) const {
     auto circle = Circle()
-        .SetRadius(setting_.stop_radius)
+        .SetRadius(settings_.stop_radius)
         .SetFillColor("white"s);
 
     for (auto stop : stops) {
@@ -117,12 +117,12 @@ void MapRenderer::RenderStopName(const std::set<const Stop*>& stops, const Spher
     for (auto stop : stops) {
         auto text = Text()
             .SetPosition(proj(stop->coordinate))
-            .SetOffset(setting_.stop_label_offset)
-            .SetFontSize(setting_.stop_label_font_size)
+            .SetOffset(settings_.stop_label_offset)
+            .SetFontSize(settings_.stop_label_font_size)
             .SetFontFamily("Verdana"s)
             .SetData(stop->name);
 
-        doc.Add(CreateUnderlay(text, setting_));
+        doc.Add(CreateUnderlay(text, settings_));
         doc.Add(text.SetFillColor("black"s));
     }
 }
