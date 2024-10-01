@@ -69,7 +69,7 @@ int GetCountUniqueStop(const std::vector<const Stop*>& route) {
             tmp.push_back(stop);
         }
     }
-    return tmp.size();
+    return static_cast<int>(tmp.size());
 }
 
 BusStat TransportCatalogue::GetBusStat(std::string_view bus_name) const {
@@ -81,13 +81,13 @@ BusStat TransportCatalogue::GetBusStat(std::string_view bus_name) const {
     const auto& route = bus_iter->second->stops;
 
     BusStat bus_stat;
-    bus_stat.count_stops = route.size();
+    bus_stat.count_stops = static_cast<int>(route.size());
     bus_stat.count_uniq_stops = GetCountUniqueStop(route);
     bus_stat.route_length = CalcDistanceRoute(route.begin(), route.end());
     double dist_geo = CalcDistanceRouteGeo(route.begin(), route.end());
 
     if (!bus_iter->second->is_roundtrip) {
-        bus_stat.count_stops += route.size() - 1;
+        bus_stat.count_stops += static_cast<int>(route.size()) - 1;
         bus_stat.route_length += CalcDistanceRoute(route.rbegin(), route.rend());
         dist_geo += CalcDistanceRouteGeo(route.rbegin(), route.rend());
     }

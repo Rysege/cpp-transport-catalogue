@@ -6,7 +6,7 @@ using namespace graph;
 using namespace catalog;
 
 double TransportRouter::ComputeTravelTime(int dist) const {
-    static const double mpm = 60. / 1000;
+    constexpr double mpm = 60. / 1000;
     return dist / settings_.bus_velocity * mpm;
 }
 
@@ -29,8 +29,8 @@ void TransportRouter::BuildGraph(const TransportCatalogue& db) {
         const auto& stops = route->stops;
 
         for (int i = 0; i < stops.size() - 1; ++i) {
-            auto [insertion, prev_vertex] = AssignVertexId(stops[i]->name);
-            if (insertion) {
+            auto [insertion1, prev_vertex] = AssignVertexId(stops[i]->name);
+            if (insertion1) {
                 AddEdge(prev_vertex, prev_vertex + 1, {  stops[i]->name, 0, settings_.bus_wait_time * 1. });
             }
             const Stop* prev_stop = stops[i];
@@ -38,8 +38,8 @@ void TransportRouter::BuildGraph(const TransportCatalogue& db) {
 
             for (int j = i + 1; j < stops.size(); ++j) {
                 if (stops[i] != stops[j]) {
-                    auto [insertion, vertex] = AssignVertexId(stops[j]->name);
-                    if (insertion) {
+                    auto [insertion2, vertex] = AssignVertexId(stops[j]->name);
+                    if (insertion2) {
                         AddEdge(vertex, vertex + 1, { stops[j]->name, 0, settings_.bus_wait_time * 1. });
                     }
                     travel_time += ComputeTravelTime(db.GetDistance(prev_stop, stops[j]));

@@ -11,8 +11,7 @@ using namespace catalog;
 namespace detail {
 
 Text CreateUnderlay(Text text, const RenderSettings& settings) {
-    text
-        .SetFillColor(settings.underlayer_color)
+    text.SetFillColor(settings.underlayer_color)
         .SetStrokeColor(settings.underlayer_color)
         .SetStrokeWidth(settings.underlayer_width)
         .SetStrokeLineCap(StrokeLineCap::ROUND)
@@ -59,7 +58,7 @@ Document MapRenderer::RenderMap(const std::set<const Bus*>& routes) const {
 
 void MapRenderer::RenderRoute(const std::set<const Bus*>& routes, const SphereProjector& proj, Document& doc) const {
     int index_color = 0;
-    int count_color = settings_.color_palette.size();
+    auto count_color = settings_.color_palette.size();
     for (auto route : routes) {
         auto shape = Polyline()
             .SetStrokeColor(settings_.color_palette.at(index_color))
@@ -81,11 +80,11 @@ void MapRenderer::RenderRoute(const std::set<const Bus*>& routes, const SpherePr
 
 void MapRenderer::RenderRouteName(const std::set<const Bus*>& routes, const SphereProjector& proj, Document& doc) const {
     int index_color = 0;
-    int count_color = settings_.color_palette.size();
+    auto count_color = settings_.color_palette.size();
 
     for (auto route : routes) {
-        auto stop = route->stops.front();
-        auto final_stop = route->stops.back();
+        const Stop* stop = route->stops.front();
+        const Stop* final_stop = route->stops.back();
         do {
             auto text = Text()
                 .SetPosition(proj(stop->coordinate))

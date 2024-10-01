@@ -99,7 +99,7 @@ Node LoadNode(std::istream& input);
 Node LoadToken(std::istream& input) {
     std::string token;
     while (std::isalpha(input.peek())) {
-        token.push_back(std::tolower(static_cast<char>(input.get())));
+        token.push_back(static_cast<char>(input.get()));
     }
     if (token.empty()) {
         throw ParsingError("Parsing error"s);
@@ -368,7 +368,7 @@ void PrintValue(const Dict& value, const PrintContext& ctx) {
     if (!value.empty()) {
         out.put('\n');
         auto inner_ctx = ctx.Indented();
-        int max_size = std::accumulate(value.begin(), value.end(), 0,
+        auto max_size = std::accumulate(value.begin(), value.end(), 0ull,
             [](size_t m, const std::pair<std::string, Node>& p) {return std::max(m, p.first.size()); });
         std::string_view sep;
 

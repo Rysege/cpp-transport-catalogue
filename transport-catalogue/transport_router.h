@@ -10,8 +10,8 @@ struct  RoutingSettings {
 
 struct Way {
     std::string_view name;
-    int span_count;
-    double time;
+    int span_count{};
+    double time{};
 };
 
 struct FoundRoute {

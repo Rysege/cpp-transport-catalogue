@@ -41,13 +41,16 @@ private:
     static const StatQueryFactory& GetFactory(std::string_view type);
 };
 
-void RequestHandler::ProcessBaseQuery(const BaseQueryHandler& handler) const {
-    handler.ProcessBaseQuery(db_);
+void RequestHandler::ProcessBaseQuery(const BaseQueryHandler& bq_handler) const {
+    bq_handler.ProcessBaseQuery(db_);
 }
 
-std::vector<Node> RequestHandler::ProcessStatQuery(const std::vector<StatRequest>& requests) const {
-    MapRenderer renderer(render_settings_);
-    TransportRouter router(routing_settings_, db_);
+std::vector<Node> RequestHandler::ProcessStatQuery(const std::vector<StatRequest>& requests,
+                                                   RenderSettings render_settings,
+                                                   RoutingSettings routing_settings) const
+{
+    MapRenderer renderer(render_settings);
+    TransportRouter router(routing_settings, db_);
 
     std::vector<Node> result;
     const StatQueryFactory factory;
@@ -55,14 +58,6 @@ std::vector<Node> RequestHandler::ProcessStatQuery(const std::vector<StatRequest
         result.push_back(factory.Create(config)->Process(db_, renderer, router));
     }
     return result;
-}
-
-void RequestHandler::SetSettingMapRenderer(renderer::RenderSettings settings) {
-    render_settings_ = settings;
-}
-
-void RequestHandler::SetSettingTransportRouter(routemap::RoutingSettings settings) {
-    routing_settings_ = settings;
 }
 
 namespace base_queries {
@@ -285,7 +280,6 @@ private:
 
 } // namespace stat_queries
 
-
 const StatQueryFactory& StatQueryFactory::GetFactory(std::string_view type) {
     static stat_queries::StatQueryStop::Factory stop;
     static stat_queries::StatQueryBus::Factory bus;
@@ -301,19 +295,19 @@ const StatQueryFactory& StatQueryFactory::GetFactory(std::string_view type) {
     return factories.at(type);
 }
 
-void BaseQueryHandler::AddBaseQuery(std::string_view name,
-                                    geo::Coordinates coordinates,
-                                    std::unordered_map<std::string_view, int> road_distances) {
-
+void BaseQueryHandler::Add(std::string_view name,
+                           geo::Coordinates coordinates,
+                           std::unordered_map<std::string_view, int> road_distances)
+{
     base_queries_.push_front(std::make_unique<base_queries::QueryStop>(name, coordinates));
-    base_queries_.push_back(std::make_unique<base_queries::QueryStopDistance>(name, road_distances));
+    base_queries_.push_back(std::make_unique<base_queries::QueryStopDistance>(name, std::move(road_distances)));
 }
 
-void BaseQueryHandler::AddBaseQuery(std::string_view name,
-                                    std::vector<std::string_view> stops,
-                                    bool is_roundtrip) {
-
-    base_queries_.push_back(std::make_unique<base_queries::QueryBus>(name, stops, is_roundtrip));
+void BaseQueryHandler::Add(std::string_view name,
+                           std::vector<std::string_view> stops,
+                           bool is_roundtrip) 
+{
+    base_queries_.push_back(std::make_unique<base_queries::QueryBus>(name, std::move(stops), is_roundtrip));
 }
 
 void BaseQueryHandler::ProcessBaseQuery(TransportCatalogue& tc) const {

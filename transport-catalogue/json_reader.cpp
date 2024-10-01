@@ -103,7 +103,7 @@ const Node& JsonReader::GetNodeRequest(const std::string& name) const {
     throw RequestError();
 }
 
-void JsonReader::LoadData(RequestHandler& handler) const {
+void JsonReader::LoadData() const {
     const Array& base_requests = GetNodeRequest("base_requests"s).AsArray();
 
     BaseQueryHandler queries;
@@ -112,20 +112,16 @@ void JsonReader::LoadData(RequestHandler& handler) const {
         const Dict& dict = request.AsDict();
         std::string_view type = dict.at("type"s).AsString();
         if (type == "Stop"sv) {
-            auto [param1, param2, param3] = TryCatch<ParamsQueryStop>(ParseStopRequest, dict);
-            queries.AddBaseQuery(param1, param2, param3);
+            queries.AddBaseQuery(TryCatch(ParseStopRequest, dict));
         }
         if (type == "Bus"sv) {
-            auto [param1, param2, param3] = TryCatch<ParamsQueryBus>(ParseBusRequest, dict);
-            queries.AddBaseQuery(param1, param2, param3);
+            queries.AddBaseQuery(TryCatch(ParseBusRequest, dict));
         }
     }
-    handler.ProcessBaseQuery(queries);
-    handler.SetSettingMapRenderer(LoadRenderSettings());
-    handler.SetSettingTransportRouter(LoadRoutingSettings());
+    handler_.ProcessBaseQuery(queries);
 }
 
-renderer::RenderSettings JsonReader::LoadRenderSettings() const {
+renderer::RenderSettings JsonReader::ParseRenderSettings() const {
     const Dict& dict = GetNodeRequest("render_settings"s).AsDict();
 
     renderer::RenderSettings setting;
@@ -152,7 +148,7 @@ renderer::RenderSettings JsonReader::LoadRenderSettings() const {
     return setting;
 }
 
-routemap::RoutingSettings JsonReader::LoadRoutingSettings() const {
+routemap::RoutingSettings JsonReader::ParseRoutingSettings() const {
     const Dict& dict = GetNodeRequest("routing_settings"s).AsDict();
 
     routemap::RoutingSettings settings{};
@@ -169,22 +165,24 @@ routemap::RoutingSettings JsonReader::LoadRoutingSettings() const {
     return settings;
 }
 
-Document JsonReader::ProcessStatRequests(RequestHandler& handler) const {
+Document JsonReader::ProcessStatRequests() const {
     const Array& stat_requests = GetNodeRequest("stat_requests"s).AsArray();
 
     std::vector<StatRequest> requests;
     for (const auto& request : stat_requests) {
         requests.push_back(ParseStatRequest(request.AsDict()));
     }
-    return Document(handler.ProcessStatQuery(requests));
+    return Document(handler_.ProcessStatQuery(requests, ParseRenderSettings(), ParseRoutingSettings()));
 }
 
-void JsonReader::PrintStatRequest(RequestHandler& handler, std::ostream& out) const {
-    Print(ProcessStatRequests(handler), out);
+JsonReader::JsonReader(catalog::TransportCatalogue& db, std::istream& in)
+    : data_(json::Load(in))
+    , handler_(db) {
+    LoadData();
 }
 
-void JsonReader::ReadJson(std::istream& in) {
-    data_ = Load(in);
+void JsonReader::PrintStatRequest(std::ostream& out) const {
+    Print(ProcessStatRequests(), out);
 }
 
 } // namespace json_reader

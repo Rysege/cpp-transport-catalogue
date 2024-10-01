@@ -5,11 +5,7 @@
 using namespace std;
 
 int main() {
-    json_reader::JsonReader reader(std::cin);
-
-    TransportCatalogue catalogue;
-    handler::RequestHandler handler(catalogue);
-    
-    reader.LoadData(handler);
-    reader.PrintStatRequest(handler, std::cout);
+    catalog::TransportCatalogue catalogue;
+    json_reader::JsonReader reader(catalogue, std::cin);
+    reader.PrintStatRequest(std::cout);
 }

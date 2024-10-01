@@ -127,7 +127,7 @@ void AddRoutePoints(Iterator first, Iterator last, svg::Polyline& shape, const S
 }
 
 template <typename ReturnType, typename Lambda>
-ReturnType ExtractData(const std::set<const catalog::Bus*>& routes, Lambda lambda) {
+auto ExtractData(const std::set<const catalog::Bus*>& routes, Lambda lambda) {
     ReturnType result{};
     for (auto route : routes) {
         std::transform(

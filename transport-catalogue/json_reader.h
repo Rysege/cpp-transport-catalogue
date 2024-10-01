@@ -14,30 +14,30 @@ public:
 
 class JsonReader {
 public:
-    JsonReader(std::istream& in) : data_(json::Load(in)) {}
+    JsonReader(catalog::TransportCatalogue& db, std::istream& in);
 
-    void ReadJson(std::istream& in);
-    void LoadData(handler::RequestHandler& rh) const;
-    void PrintStatRequest(handler::RequestHandler& rh, std::ostream& out) const;
-    renderer::RenderSettings LoadRenderSettings() const;
-    routemap::RoutingSettings LoadRoutingSettings() const;
+    void PrintStatRequest(std::ostream& out) const;
 
 private:
     json::Document data_;
+    handler::RequestHandler handler_;
 
+    void LoadData() const;
     const json::Node& GetNodeRequest(const std::string& name) const;
-    json::Document ProcessStatRequests(handler::RequestHandler& handler) const;
+    json::Document ProcessStatRequests() const;
+    renderer::RenderSettings ParseRenderSettings() const;
+    routemap::RoutingSettings ParseRoutingSettings() const;
 };
 
 template <typename ReturnType, typename Iterator, typename Lambda>
-ReturnType ConvertTo(Iterator first, Iterator last, Lambda lambda) {
+auto ConvertTo(Iterator first, Iterator last, Lambda lambda) {
     ReturnType result{};
     std::transform(first, last, std::inserter(result, end(result)), lambda);
     return result;
 }
 
-template<typename ReturnType, typename Func>
-ReturnType TryCatch(Func func, const json::Dict& dict) {
+template<typename Func>
+auto TryCatch(Func func, const json::Dict& dict) {
     try {
         return func(dict);
     }
